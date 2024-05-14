@@ -14,6 +14,7 @@ const Trasanctions = () => {
   const [errorMsg, setErrorMsg] = useState('')
 
   const [visibleItems, setVisibleItems] = useState(false)
+  const [visibleAllItems, setVisibleAllItems] = useState(false)
 
   // Function to set message and clear after delay
   const setMessageWithDelay = (message, delay) => {
@@ -93,6 +94,13 @@ const Trasanctions = () => {
     }))
   }
 
+  const toggleShowAllItems = (e) => {
+    e.preventDefault()
+    setVisibleAllItems((prevVisibleAllItems) => !prevVisibleAllItems)
+    if (visibleItems) setVisibleItems(false)
+    if (!visibleItems) setVisibleItems(true)
+  }
+
   const formatDate = (date) => {
     const newDate = new Date(date)
     const formattedDate = newDate.toLocaleDateString('id-ID', dateOptions)
@@ -168,7 +176,7 @@ const Trasanctions = () => {
                   title="Show detail"
                   onClick={(e) => toggleShowItems(e, transaction.transaction_id)}
                   className="inline px-2 py-1 mx-2 bold border rounded-md text-white bg-black hover:bg-gray-700">
-                  {visibleItems[transaction.transaction_id] ? '-' : '+'}
+                  {visibleItems[transaction.transaction_id] || visibleAllItems ? '-' : '+'}
                 </button>
                 {/* <Link
                   to={`/edit-transaction/detail?transactionId=${transaction.transaction_id}`}
@@ -192,7 +200,7 @@ const Trasanctions = () => {
               </div>
             </td>
           </tr>
-          {visibleItems[transaction.transaction_id] && (
+          {(visibleItems[transaction.transaction_id] || visibleAllItems) && (
             <tr>
               <td colSpan="6">
                 <div className="float-right">
@@ -293,6 +301,11 @@ const Trasanctions = () => {
                 Buat Transaksi Baru
               </button>
             </Link>
+            <button
+              onClick={(e) => toggleShowAllItems(e)}
+              className="inline mx-3 text-white border bg-black hover:bg-gray-700 font-semibold px-2 rounded-md  items-center">
+              {!visibleAllItems ? 'Show all' : 'Hide all'}
+            </button>
           </div>
           <div>
             <p className="inline mx-1">Start Date:</p>

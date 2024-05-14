@@ -15,6 +15,7 @@ const OwnerTransaction = () => {
   const [endDate, setEndDate] = useState('')
 
   const [visibleItems, setVisibleItems] = useState(false)
+  const [visibleAllItems, setVisibleAllItems] = useState(false)
 
   // error message
   const [errorMsg, setErrorMsg] = useState('')
@@ -105,6 +106,13 @@ const OwnerTransaction = () => {
     }))
   }
 
+  const toggleShowAllItems = (e) => {
+    e.preventDefault()
+    setVisibleAllItems((prevVisibleAllItems) => !prevVisibleAllItems)
+    if (visibleItems) setVisibleItems(false)
+    if (!visibleItems) setVisibleItems(true)
+  }
+
   const formatDate = (date) => {
     const newDate = new Date(date)
     const formattedDate = newDate.toLocaleDateString('id-ID', dateOptions)
@@ -179,7 +187,7 @@ const OwnerTransaction = () => {
                   title="Show detail"
                   className="inline px-2 py-1 mx-2 bold border rounded-md text-white bg-black hover:bg-gray-700"
                   onClick={() => toggleShowItems(transaction.transaction_id)}>
-                  {visibleItems[transaction.transaction_id] ? '-' : '+'}
+                  {visibleItems[transaction.transaction_id] || visibleAllItems ? '-' : '+'}
                 </button>
                 {/* <Link
                   to={`/edit-transaction/detail?transactionId=${transaction.transaction_id}`}
@@ -203,7 +211,7 @@ const OwnerTransaction = () => {
               </div>
             </td>
           </tr>
-          {visibleItems[transaction.transaction_id] && (
+          {(visibleItems[transaction.transaction_id] || visibleAllItems) && (
             <tr>
               <td colSpan="6">
                 <div className="float-right">
@@ -306,6 +314,11 @@ const OwnerTransaction = () => {
                 Buat Transaksi Baru
               </button>
             </Link>
+            <button
+              onClick={(e) => toggleShowAllItems(e)}
+              className="inline mx-3 text-white border bg-black hover:bg-gray-700 font-semibold px-2 rounded-md  items-center">
+              {!visibleAllItems ? 'Show all' : 'Hide all'}
+            </button>
           </div>
           <div>
             <p className="inline mx-1">Start Date:</p>
