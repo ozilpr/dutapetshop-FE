@@ -1,4 +1,5 @@
 import axios from 'axios'
+import CustomError from '../exceptions/CustomError'
 
 const PET_OWN_URL = 'http://localhost:5000/pet-owner'
 
@@ -22,7 +23,7 @@ const PetOwnerService = {
 
       if (response.status === 201) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getPetOwnerByOwnerId: async (accessToken, ownerId) => {
@@ -36,7 +37,7 @@ const PetOwnerService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   deletePetOwnerById: async (accessToken, id) => {
@@ -50,7 +51,7 @@ const PetOwnerService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   }
 }

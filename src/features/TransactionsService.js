@@ -1,4 +1,5 @@
 import axios from 'axios'
+import CustomError from '../exceptions/CustomError'
 
 const TRANSCT_URL = 'http://localhost:5000/transaction'
 const TRANSCT_DET_URL = 'http://localhost:5000/transaction/detail'
@@ -23,7 +24,7 @@ const TransactionsService = {
 
       if (response.status === 201) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getTransactionDetails: async (accessToken) => {
@@ -37,7 +38,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getTransactionDetailById: async (accessToken, id) => {
@@ -51,7 +52,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getTransactionDetailByOwnerId: async (accessToken, ownerId) => {
@@ -65,7 +66,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   updateTransactionDetailById: async (accessToken, id, ownerId) => {
@@ -86,7 +87,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   deleteTransactionDetailById: async (accessToken, id) => {
@@ -100,7 +101,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getTransactions: async (accessToken) => {
@@ -114,7 +115,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   updateTransactionById: async (accessToken, id, { resourceId, quantity }) => {
@@ -136,7 +137,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   deleteTransactionById: async (accessToken, id) => {
@@ -150,7 +151,7 @@ const TransactionsService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   }
 }

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import CustomError from '../exceptions/CustomError'
 
 const PET_URL = 'http://localhost:5000/pet'
 
@@ -25,7 +26,7 @@ const PetsService = {
 
       if (response.status === 201) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getPets: async (accessToken) => {
@@ -39,7 +40,7 @@ const PetsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getPetsWithoutOwner: async (accessToken) => {
@@ -53,7 +54,7 @@ const PetsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getPetById: async (accessToken, id) => {
@@ -67,7 +68,7 @@ const PetsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   updatePetById: async (accessToken, id, { name, race, type, gender, birthdate }) => {
@@ -92,7 +93,7 @@ const PetsService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   deletePetById: async (accessToken, id) => {
@@ -106,7 +107,7 @@ const PetsService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   }
 }

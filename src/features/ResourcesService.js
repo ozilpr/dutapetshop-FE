@@ -1,4 +1,5 @@
 import axios from 'axios'
+import CustomError from '../exceptions/CustomError'
 
 const RESC_URL = 'http://localhost:5000/resource'
 
@@ -24,7 +25,7 @@ const ResourcesService = {
 
       if (response.status === 201) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getResources: async (accessToken) => {
@@ -38,7 +39,7 @@ const ResourcesService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   getResourceById: async (accessToken, id) => {
@@ -52,7 +53,7 @@ const ResourcesService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   updateResourceById: async (accessToken, id, { name, description, type, price }) => {
@@ -76,7 +77,7 @@ const ResourcesService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   },
   deleteResourceById: async (accessToken, id) => {
@@ -90,7 +91,7 @@ const ResourcesService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new CustomError(error.response.data.message, error.response.status)
     }
   }
 }
