@@ -14,7 +14,6 @@ import EditResource from './pages/Resources/EditResource'
 import OwnersPage from './pages/Owners/OwnersPage'
 import AddOwner from './pages/Owners/AddOwner'
 import EditOwner from './pages/Owners/EditOwner'
-// import
 import AddPet from './pages/Pets/AddPet'
 import PetsPage from './pages/Pets/PetsPage'
 import EditPet from './pages/Pets/EditPet'
@@ -24,6 +23,7 @@ import OwnerProfilePage from './pages/Owners/OwnerProfilePage'
 import OwnerTransactionPage from './pages/Transactions/OwnerTransactionPage'
 import PetById from './pages/Pets/PetById'
 import AddPetOwner from './pages/Pets/AddPetOwner'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -32,6 +32,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="*" element={<NotFound />} />
             <Route element={<PrivateRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminPage />} />
