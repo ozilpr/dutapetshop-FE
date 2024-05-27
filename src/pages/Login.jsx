@@ -11,7 +11,7 @@ const Login = () => {
     try {
       await loggedIn(username, password)
     } catch (error) {
-      setMsg(`Login ${error}`)
+      setMsg(`${error.message}`)
     }
   }
 
