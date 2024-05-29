@@ -17,15 +17,15 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "react-scripts --openssl-legacy-provider start",
+    "build": "react-scripts --openssl-legacy-provider build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint .",
     "lint:fix": "eslint --fix",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
-    "watch" : "npx tailwindcss -i ./src/input.css -o ./src/index.css --watch",
-    "minify" : "npx tailwindcss -i ./src/input.css -o ./src/index.css --minify"
+    "watch": "npx tailwindcss -i ./src/input.css -o ./src/index.css --watch",
+    "minify": "npx tailwindcss -i ./src/input.css -o ./src/index.css --minify"
   },
   "eslintConfig": {
     "extends": [
