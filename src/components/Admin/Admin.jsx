@@ -10,10 +10,10 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const response = await AdminService.getAdminByName('')
+      const response = await AdminService.getAdminByName('8')
       setAdmin(response.data.admin)
     } catch (error) {
-      setMsg(`Admin ${error}`)
+      setMsg(`${error.message}`)
     }
   }
 

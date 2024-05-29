@@ -34,7 +34,7 @@ const FormEditAdmin = () => {
       })
       nav('/admin')
     } catch (error) {
-      setMsg(`Admin ${error}`)
+      setMsg(`${error.message}`)
     }
   }
 
