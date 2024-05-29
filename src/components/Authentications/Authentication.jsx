@@ -14,8 +14,6 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate()
 
   const loggedIn = async (username, password) => {
-    const refreshToken = localStorage.getItem('refreshToken')
-
     if (!refreshToken) {
       return await login(username, password)
     }
@@ -58,9 +56,13 @@ export const AuthProvider = ({ children }) => {
   const refreshAccessToken = async () => {
     try {
       const { data } = await AuthService.refreshToken(refreshToken)
-      setAccessToken(data.accessToken)
-      localStorage.setItem('accessToken', data.accessToken)
-      navigate('/dashboard')
+      if (data) {
+        setAccessToken(data.accessToken)
+        localStorage.setItem('accessToken', data.accessToken)
+        navigate('/dashboard')
+      } else {
+        logout()
+      }
     } catch (error) {
       console.error('Token refresh failed:', error.message)
       throw new Error(error.message)
