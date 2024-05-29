@@ -31,9 +31,9 @@ const FormEditResource = () => {
   }
 
   useEffect(() => {
-    const fetchData = async (accessToken) => {
+    const fetchData = async () => {
       try {
-        const response = await ResourcesService.getResourceById(accessToken, resourceId)
+        const response = await ResourcesService.getResourceById(user.accessToken, resourceId)
         setData(response.data.resource)
         setName(response.data.resource.name)
         setDescription(response.data.resource.description)
@@ -41,11 +41,12 @@ const FormEditResource = () => {
         setPrice(response.data.resource.price)
         setErrorMsg('')
       } catch (error) {
-        setErrorMsg(error)
+        if (error.statusCode === 401) user.refreshAccessToken()
+        setErrorMsg(`${error.message}`)
       }
     }
 
-    fetchData(user.accessToken)
+    fetchData()
   }, [user, resourceId])
 
   async function saveData(e) {
@@ -66,7 +67,8 @@ const FormEditResource = () => {
       setMessageWithDelay(response.message, 3000)
       setErrorMsg('')
     } catch (error) {
-      setErrorMsg(`Resource ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

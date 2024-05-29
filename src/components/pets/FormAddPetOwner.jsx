@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import PetsService from '../../features/PetsService'
 import OwnersService from '../../features/OwnersService'
 import PetOwnerService from '../../features/PetOwnerService'
@@ -39,17 +39,18 @@ const FormAddPetOwner = () => {
     }, delay)
   }
 
-  const fetchData = async (accessToken) => {
+  const fetchData = useCallback(async () => {
     try {
-      const ownResponse = await OwnersService.getOwners(accessToken)
+      const ownResponse = await OwnersService.getOwners(user.accessToken)
       setOwner(ownResponse.data.owners)
 
-      const petResponse = await PetsService.getPetsWithoutOwner(accessToken)
+      const petResponse = await PetsService.getPetsWithoutOwner(user.accessToken)
       setPet(petResponse.data.pets)
     } catch (error) {
-      setErrorMsg(`Owner ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     if (getOwnerId && getOwnerName && getRegCode) {
@@ -57,8 +58,8 @@ const FormAddPetOwner = () => {
       setOwnerName(getOwnerName)
       setRegCode(getRegCode)
     }
-    fetchData(user.accessToken)
-  }, [user, getOwnerId, getOwnerName, getRegCode])
+    fetchData()
+  }, [getOwnerId, getOwnerName, getRegCode, fetchData])
 
   async function saveData(e) {
     e.preventDefault()
@@ -70,7 +71,7 @@ const FormAddPetOwner = () => {
         })
 
         if (response) {
-          fetchData(user.accessToken)
+          fetchData()
           setMessageWithDelay(response.message, 5000)
 
           setErrorMsg('')
@@ -84,7 +85,8 @@ const FormAddPetOwner = () => {
         }
       }
     } catch (error) {
-      setErrorMsg(`Pet Owner ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

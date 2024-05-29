@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../Authentications/Authentication'
 
 const FormAddResource = () => {
-  const { accessToken } = useAuth()
+  const user = useAuth()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState('')
@@ -28,7 +28,7 @@ const FormAddResource = () => {
   async function saveData(e) {
     e.preventDefault()
     try {
-      const response = await ResourcesService.addResource(accessToken, {
+      const response = await ResourcesService.addResource(user.accessToken, {
         name: name,
         description: description,
         type: type,
@@ -46,9 +46,8 @@ const FormAddResource = () => {
 
       // nav('/resources')
     } catch (error) {
-      if (error.response) {
-        setErrorMsg(`Resource ${error}`)
-      }
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

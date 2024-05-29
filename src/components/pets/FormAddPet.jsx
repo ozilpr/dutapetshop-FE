@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import PetsService from '../../features/PetsService'
 import OwnersService from '../../features/OwnersService'
 import PetOwnerService from '../../features/PetOwnerService'
@@ -29,20 +29,6 @@ const FormAddPet = () => {
   const [errorMsg, setErrorMsg] = useState('')
   const [msg, setMsg] = useState('')
 
-  const fetchData = async (accessToken) => {
-    try {
-      const ownResponse = await OwnersService.getOwners(accessToken)
-
-      setOwner(ownResponse.data.owners)
-    } catch (error) {
-      setErrorMsg(`Owner ${error}`)
-    }
-  }
-
-  useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user])
-
   // Function to set message and clear after delay
   const setMessageWithDelay = (message, delay) => {
     setMsg(message) // Set message to 'succeed'
@@ -51,6 +37,21 @@ const FormAddPet = () => {
       setMsg('') // Clear message after delay
     }, delay)
   }
+
+  const fetchData = useCallback(async () => {
+    try {
+      const ownResponse = await OwnersService.getOwners(user.accessToken)
+
+      setOwner(ownResponse.data.owners)
+    } catch (error) {
+      if (error.statusCode === 401) user.refreshAccesToken()
+      setErrorMsg(`${error}`)
+    }
+  }, [user])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   async function saveData(e) {
     e.preventDefault()
@@ -88,7 +89,8 @@ const FormAddPet = () => {
         setRegCode('')
       }
     } catch (error) {
-      setErrorMsg(`Pet Owner ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error}`)
     }
   }
 

@@ -27,19 +27,20 @@ const FormEditOwner = () => {
   }
 
   useEffect(() => {
-    const fetchData = async (accessToken) => {
+    const fetchData = async (user) => {
       try {
-        const response = await OwnersService.getOwnerById(accessToken, ownerId)
+        const response = await OwnersService.getOwnerById(user.accessToken, ownerId)
         setRegisterCode(response.data.owner.register_code)
         setName(response.data.owner.name)
         setPhone(response.data.owner.phone)
         setData(response.data.owner)
       } catch (error) {
-        setErrorMsg(error)
+        if (error.statusCode === 401) user.refreshAccesToken()
+        setErrorMsg(error.message)
       }
     }
 
-    fetchData(user.accessToken)
+    fetchData(user)
   }, [user, ownerId])
 
   async function saveData(e) {

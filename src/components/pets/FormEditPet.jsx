@@ -32,9 +32,9 @@ const FormEditPet = () => {
   }
 
   useEffect(() => {
-    const fetchData = async (accessToken) => {
+    const fetchData = async () => {
       try {
-        const response = await PetsService.getPetById(accessToken, petId)
+        const response = await PetsService.getPetById(user.accessToken, petId)
         setData(response.data.pet)
 
         const { pet } = response.data
@@ -45,10 +45,11 @@ const FormEditPet = () => {
         setDateString(pet.birthdate)
         setErrorMsg('')
       } catch (error) {
-        setErrorMsg(error)
+        if (error.statusCode === 401) user.refreshAccessToken()
+        setErrorMsg(`${error.message}`)
       }
     }
-    fetchData(user.accessToken)
+    fetchData()
   }, [user, petId])
 
   async function saveData(e) {
@@ -66,7 +67,8 @@ const FormEditPet = () => {
       setMessageWithDelay(response.message, 3000)
       setErrorMsg('')
     } catch (error) {
-      setErrorMsg(`Pet ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

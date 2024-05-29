@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PetsService from '../../features/PetsService'
 import { useAuth } from '../Authentications/Authentication'
@@ -22,28 +22,30 @@ const Pets = () => {
     }, delay)
   }
 
-  const fetchData = async (accessToken) => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await PetsService.getPets(accessToken)
+      const response = await PetsService.getPets(user.accessToken)
       setData(response.data.pets)
       setErrorMsg('')
     } catch (error) {
-      setErrorMsg(`Pet ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
-  }
+  }, [user])
 
   useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user])
+    fetchData()
+  }, [fetchData])
 
   const deletePet = async (id) => {
     try {
       const response = await PetsService.deletePetById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
+      fetchData()
     } catch (error) {
-      setErrorMsg(`Pet ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

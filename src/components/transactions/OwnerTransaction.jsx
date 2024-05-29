@@ -40,41 +40,40 @@ const OwnerTransaction = () => {
     timeZoneName: 'short'
   }
 
-  const fetchData = useCallback(
-    async (accessToken) => {
-      try {
-        const response = await TransactionService.getTransactionDetailByOwnerId(
-          accessToken,
-          ownerId
-        )
-        // console.log(response.data.transactions)
-        setOwner(response.data.owner[0])
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await TransactionService.getTransactionDetailByOwnerId(
+        user.accessToken,
+        ownerId
+      )
+      // console.log(response.data.transactions)
+      setOwner(response.data.owner[0])
 
-        if (response.data.transactions.length > 0) {
-          setTransactions(response.data.transactions)
-        } else {
-          setMsg('Belum ada data transaksi')
-        }
-        setErrorMsg('')
-      } catch (error) {
-        setErrorMsg(`Transaction ${error}`)
+      if (response.data.transactions.length > 0) {
+        setTransactions(response.data.transactions)
+      } else {
+        setMsg('Belum ada data transaksi')
       }
-    },
-    [ownerId]
-  )
+      setErrorMsg('')
+    } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
+    }
+  }, [ownerId, user])
 
   useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user, fetchData])
+    fetchData()
+  }, [fetchData])
 
   const deleteTransaction = async (id) => {
     try {
       const response = await TransactionService.deleteTransactionDetailById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
+      fetchData()
     } catch (error) {
-      setErrorMsg(`Transaction ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 
@@ -84,9 +83,10 @@ const OwnerTransaction = () => {
       const response = await TransactionService.deleteTransactionById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
+      fetchData()
     } catch (error) {
-      setErrorMsg(`Transaction ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

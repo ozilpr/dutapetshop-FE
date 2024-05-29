@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import OwnersService from '../../features/OwnersService'
 import { useAuth } from '../Authentications/Authentication'
@@ -22,28 +22,29 @@ const Owners = () => {
     }, delay)
   }
 
-  const fetchData = async (accessToken) => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await OwnersService.getOwners(accessToken)
+      const response = await OwnersService.getOwners(user.accessToken)
       setData(response.data.owners)
     } catch (error) {
-      setErrorMsg(`Owner ${error}`)
+      if (error.statusCode === 401) user.logout()
+      setErrorMsg(`${error.message}`)
     }
-  }
+  }, [user])
 
   useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user])
+    fetchData()
+  }, [fetchData])
 
   const deleteOwner = async (id) => {
     try {
       const response = await OwnersService.deleteOwnerById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
-      console.log(response)
+      fetchData()
     } catch (error) {
-      setErrorMsg(`Owner ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

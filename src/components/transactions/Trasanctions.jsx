@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import TransactionService from '../../features/TransactionsService'
 import { useAuth } from '../Authentications/Authentication'
@@ -35,32 +35,30 @@ const Trasanctions = () => {
     timeZoneName: 'short'
   }
 
-  const fetchData = async (accessToken) => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await TransactionService.getTransactionDetails(accessToken)
+      const response = await TransactionService.getTransactionDetails(user.accessToken)
       setData(response.data)
       setErrorMsg('')
     } catch (error) {
-      if (error.response) {
-        setErrorMsg(`Transaction ${error}`)
-      }
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
-  }
+  }, [user])
 
   useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user])
+    fetchData()
+  }, [fetchData])
 
   const deleteTransaction = async (id) => {
     try {
       const response = await TransactionService.deleteTransactionDetailById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
+      fetchData()
     } catch (error) {
-      if (error.response) {
-        setErrorMsg(`Transaction ${error}`)
-      }
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 
@@ -69,11 +67,10 @@ const Trasanctions = () => {
       const response = await TransactionService.deleteTransactionById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
+      fetchData()
     } catch (error) {
-      if (error.response) {
-        setErrorMsg(`Transaction ${error}`)
-      }
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

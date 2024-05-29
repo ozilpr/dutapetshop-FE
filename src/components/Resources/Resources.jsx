@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ResourcesService from '../../features/ResourcesService'
 import { useAuth } from '../Authentications/Authentication'
@@ -21,30 +21,30 @@ const Resources = () => {
     }, delay)
   }
 
-  const fetchData = async (accessToken) => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await ResourcesService.getResources(accessToken)
+      const response = await ResourcesService.getResources(user.accessToken)
       setData(response.data.resources)
       setErrorMsg('')
     } catch (error) {
-      setErrorMsg(`Resources ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
-  }
+  }, [user])
 
   useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user])
+    fetchData()
+  }, [fetchData])
 
   const deleteResource = async (id) => {
     try {
       const response = await ResourcesService.deleteResourceById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
-      fetchData(user.accessToken)
+      fetchData()
     } catch (error) {
-      if (error.response) {
-        setMsg(`Resource ${error}`)
-      }
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../Authentications/Authentication'
 
 const FormAddOwner = () => {
-  const { accessToken } = useAuth()
+  const user = useAuth()
   const [registerCode, setRegisterCode] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -25,7 +25,7 @@ const FormAddOwner = () => {
   async function saveData(e) {
     e.preventDefault()
     try {
-      const response = await OwnersService.addOwner(accessToken, {
+      const response = await OwnersService.addOwner(user.accessToken, {
         registerCode: registerCode,
         name: name,
         phone: phone
@@ -37,7 +37,8 @@ const FormAddOwner = () => {
       setName('')
       setPhone('')
     } catch (error) {
-      setErrorMsg(`Owner ${error}`)
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error.message}`)
     }
   }
 

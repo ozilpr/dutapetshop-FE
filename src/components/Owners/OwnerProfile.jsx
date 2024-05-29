@@ -25,24 +25,22 @@ const OwnerProfile = () => {
     }, delay)
   }
 
-  const fetchData = useCallback(
-    async (accessToken) => {
-      try {
-        const ownerResponse = await OwnersService.getOwnerById(accessToken, ownerId)
-        setOwnerData(ownerResponse.data.owner)
-
-        const petOwnerResponse = await PetOwnerService.getPetOwnerByOwnerId(accessToken, ownerId)
-        setPetOwnerData(petOwnerResponse.data.pet)
-      } catch (error) {
-        setPetStatus(error.message)
-      }
-    },
-    [ownerId]
-  )
+  const fetchData = useCallback(async () => {
+    try {
+      const ownerResponse = await OwnersService.getOwnerById(user.accessToken, ownerId)
+      setOwnerData(ownerResponse.data.owner)
+      console.log(ownerId)
+      const petOwnerResponse = await PetOwnerService.getPetOwnerByOwnerId(user.accessToken, ownerId)
+      setPetOwnerData(petOwnerResponse.data.pet)
+    } catch (error) {
+      if (error.statusCode === 401) user.refreshAccesToken()
+      if (error.statusCode !== 500) setPetStatus(error.message)
+    }
+  }, [user, ownerId])
 
   useEffect(() => {
-    fetchData(user.accessToken)
-  }, [user, fetchData])
+    fetchData()
+  }, [fetchData])
 
   const formatPhoneNumber = (phoneNumber) => {
     if (phoneNumber) {
@@ -67,16 +65,20 @@ const OwnerProfile = () => {
     nav(`/pet?petId=${petId}`)
   }
 
-  const deletePetOwner = async (id) => {
-    try {
-      const response = await PetOwnerService.deletePetOwnerById(user.accessToken, id)
-      setMessageWithDelay(response, 3000)
-      setErrorMsg('')
-      fetchData(user.accessToken)
-    } catch (error) {
-      setErrorMsg(`Pet ${error}`)
-    }
-  }
+  const deletePetOwner = useCallback(
+    async (id) => {
+      try {
+        const response = await PetOwnerService.deletePetOwnerById(user.accessToken, id)
+        setMessageWithDelay(response, 3000)
+        setErrorMsg('')
+        fetchData()
+      } catch (error) {
+        if (error.statusCode === 401) user.refreshAccessToken()
+        setErrorMsg(`${error}`)
+      }
+    },
+    [user, fetchData]
+  )
 
   return (
     <div className="flex flex-col items-center min-h-screen mt-2 bg-gray-100 ">

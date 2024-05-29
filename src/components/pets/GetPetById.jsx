@@ -16,16 +16,17 @@ const GetPetById = () => {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
-    const fetchData = async (accessToken) => {
+    const fetchData = async () => {
       try {
-        const response = await PetsService.getPetById(accessToken, petId)
+        const response = await PetsService.getPetById(user.accessToken, petId)
         setData(response.data.pet)
         setMsg('')
       } catch (error) {
-        setMsg(`Pet ${error}`)
+        if (error.statusCode === 401) user.refreshAccessToken()
+        setMsg(`${error.message}`)
       }
     }
-    fetchData(user.accessToken)
+    fetchData()
   }, [user, petId])
 
   const dateOptions = {
