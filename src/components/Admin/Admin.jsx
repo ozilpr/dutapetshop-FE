@@ -1,34 +1,39 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminService from '../../features/AdminService'
+import { useAuth } from '../Authentications/Authentication'
 
 const Admin = () => {
+  const user = useAuth()
+
   const [admin, setAdmin] = useState([])
 
   // error message
   const [msg, setMsg] = useState('')
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await AdminService.getAdminByName('8')
+      const response = await AdminService.getAdminByName(user.accessToken, '')
       setAdmin(response.data.admin)
     } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
       setMsg(`${error.message}`)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
-  // const deleteAdmin = async (id) => {
-  //   try {
-  //     await AdminService.deleteAdminById(id)
-  //     fetchData()
-  //   } catch (error) {
-  //     setMsg(error)
-  //   }
-  // }
+  const deleteAdmin = async (id) => {
+    try {
+      await AdminService.deleteAdminById(user.accessToken, id)
+      fetchData()
+    } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setMsg(`${error.message}`)
+    }
+  }
 
   const renderTable = () => {
     return admin.map((admin) => {
@@ -48,14 +53,14 @@ const Admin = () => {
                   Edit
                 </button>
               </Link>
-              {/* <div
+              <div
                 title="Remove"
                 className="sm:text-sm w-full bg-red-500 hover:bg-red-400 text-white font-semibold py-1 mt-1 rounded-md  items-center"
                 onClick={() => {
                   if (window.confirm(`Konfirmasi Hapus ${admin.fullname} sebagai admin`))
                     deleteAdmin(admin.id)
                 }}
-              /> */}
+              />
             </div>
           </td>
         </tr>

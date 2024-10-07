@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import AdminService from '../../features/AdminService'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../Authentications/Authentication'
 
 const FormAddAdmin = () => {
+  const user = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confPassword, setConfPassword] = useState('')
@@ -15,16 +17,7 @@ const FormAddAdmin = () => {
   async function saveData(e) {
     e.preventDefault()
     try {
-      // if (username === '') {
-      //   setMsg('Input nama tidak boleh kosong')
-      //   return false
-      // }
-      // if (password === '' && confPassword === '') {
-      //   setMsg('Input password tidak boleh kosong')
-      //   return false
-      // }
-
-      await AdminService.addAdmin({
+      await AdminService.addAdmin(user.accessToken, {
         username: username,
         password: password,
         confPassword: confPassword,
@@ -32,6 +25,7 @@ const FormAddAdmin = () => {
       })
       nav('/admin')
     } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
       setMsg(`${error.message}`)
     }
   }
