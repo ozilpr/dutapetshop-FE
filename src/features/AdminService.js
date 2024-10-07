@@ -3,7 +3,7 @@ import axios from 'axios'
 const ADM_URL = 'http://localhost:5000/admin'
 
 const AdminService = {
-  addAdmin: async ({ username, password, confPassword, fullname }) => {
+  addAdmin: async (accessToken, { username, password, confPassword, fullname }) => {
     try {
       const response = await axios.post(
         `${ADM_URL}`,
@@ -16,7 +16,8 @@ const AdminService = {
         {
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json'
+            Accept: 'application/json',
+            Authorization: `Bearer ${accessToken}`
           }
         }
       )
@@ -26,11 +27,12 @@ const AdminService = {
       if (error.response) throw new Error(error.response.data.message)
     }
   },
-  getAdminById: async (id) => {
+  getAdminById: async (accessToken, id) => {
     try {
       const response = await axios.get(`${ADM_URL}/${id}`, {
         headers: {
-          Accept: 'application/json'
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`
         }
       })
 
@@ -39,11 +41,12 @@ const AdminService = {
       if (error.response) throw new Error(error.response.data.message)
     }
   },
-  getAdminByName: async (name) => {
+  getAdminByName: async (accessToken, name) => {
     try {
       const response = await axios.get(`${ADM_URL}?name=${name}`, {
         headers: {
-          Accept: 'application/json'
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`
         }
       })
 
@@ -54,7 +57,7 @@ const AdminService = {
       }
     }
   },
-  updateAdminById: async (id, { username, password, confPassword, fullname }) => {
+  updateAdminById: async (accessToken, id, { username, password, confPassword, fullname }) => {
     try {
       const response = await axios.put(
         `${ADM_URL}/${id}`,
@@ -67,7 +70,8 @@ const AdminService = {
         {
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json'
+            Accept: 'application/json',
+            Authorization: `Bearer ${accessToken}`
           }
         }
       )
@@ -78,11 +82,12 @@ const AdminService = {
       if (error.response) throw new Error(error.response.data.message)
     }
   },
-  deleteAdminById: async (id) => {
+  deleteAdminById: async (accessToken, id) => {
     try {
       const response = await axios.delete(`${ADM_URL}/${id}`, {
         headers: {
-          Accept: 'application/json'
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`
         }
       })
 
