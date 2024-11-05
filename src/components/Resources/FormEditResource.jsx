@@ -90,10 +90,11 @@ const FormEditResource = () => {
     // }
   }
 
-  const setDescriptionHandler = (value) => {
-    const { length } = value
+  const setDescriptionHandler = (e) => {
+    e.preventDefault()
+    const { length } = e.target.value
     setCount(length)
-    setDescription(value)
+    setDescription(e.target.value)
   }
 
   // const handleState = () => {
@@ -101,16 +102,17 @@ const FormEditResource = () => {
   // }
 
   const handleInputPrice = (value) => {
-    if (value.length === 1 && value === '0') {
-      // Allow single zero
-      setPrice(value)
-    } else if (value.length > 1 && value.startsWith('0')) {
-      // If more than one character and starts with zero, remove leading zero
-      value = value.replace(/^0+/, '') // Remove leading zeros
-      setPrice(value)
-    } else if (!isNaN(value)) {
-      // Allow valid numeric input
-      setPrice(value)
+    // Menghapus karakter yang tidak valid (non-digit dan selain titik desimal)
+    const sanitizedValue = value.replace(/[^0-9.]/g, '')
+
+    // Jika memiliki lebih dari satu titik desimal, cegah input
+    const dotCount = (sanitizedValue.match(/\./g) || []).length
+    if (dotCount > 1) return
+
+    // Membatasi maksimal dua angka setelah titik desimal
+    const decimalMatch = sanitizedValue.match(/^(\d+(\.\d{0,2})?)?$/)
+    if (decimalMatch) {
+      setPrice(sanitizedValue)
     }
   }
 
@@ -119,7 +121,7 @@ const FormEditResource = () => {
       return parseFloat(value).toLocaleString('id-ID', {
         style: 'currency',
         currency: 'IDR',
-        minimumFractionDigits: 0
+        minimumFractionDigits: 2
       })
     } else {
       return ''
@@ -133,7 +135,7 @@ const FormEditResource = () => {
           <h1 className=" text-2xl font-bold decoration-gray-400">Ubah Item</h1>
         </div>
         <div className="w-full px-6 py-4 bg-white rounded shadow-md ring-1 ring-gray-900/10">
-          <form name="userForm" autoComplete="off" onSubmit={saveData}>
+          <form name="userForm" autoComplete="off">
             <p className="text-center text-md text-red-500">{errorMsg}</p>
             <p className="text-center text-md text-green-500">{msg}</p>
             <div>
@@ -160,7 +162,7 @@ const FormEditResource = () => {
                 maxLength={400}
                 placeholder={data.description}
                 value={description}
-                onChange={(e) => setDescriptionHandler(e.target.value)}></textarea>
+                onChange={(e) => setDescriptionHandler(e)}></textarea>
               <p>{count + '/400'}</p>
             </div>
             <div className="mt-4">
@@ -191,7 +193,8 @@ const FormEditResource = () => {
             </div>
             <div className="flex items-center justify-start mt-4 gap-x-2">
               <button
-                type="submit"
+                type="button"
+                onClick={saveData}
                 className="px-6 py-2 mr-1 text-sm font-semibold rounded-md shadow-md text-white bg-green-500 hover:bg-green-700 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300">
                 Ubah
               </button>

@@ -1,6 +1,5 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import './App.css'
 import { AuthProvider } from './components/Authentications/Authentication'
 import PrivateRoute from './router/PrivateRoute'
 import Login from './pages/Login'
@@ -20,7 +19,6 @@ import EditPet from './pages/Pets/EditPet'
 import TransactionsPage from './pages/Transactions/TransactionsPage'
 import AddTransaction from './pages/Transactions/AddTransaction'
 import OwnerProfilePage from './pages/Owners/OwnerProfilePage'
-import OwnerTransactionPage from './pages/Transactions/OwnerTransactionPage'
 import PetById from './pages/Pets/PetById'
 import AddPetOwner from './pages/Pets/AddPetOwner'
 import NotFound from './pages/NotFound'
@@ -52,7 +50,6 @@ function App() {
               <Route path="/edit-pet" element={<EditPet />} />
               <Route path="/transaction/detail" element={<TransactionsPage />} />
               <Route path="/add-transaction" element={<AddTransaction />} />
-              <Route path="/transaction/detail/owner" element={<OwnerTransactionPage />} />
             </Route>
           </Routes>
         </AuthProvider>

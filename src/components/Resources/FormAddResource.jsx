@@ -8,7 +8,7 @@ const FormAddResource = () => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState('')
-  const [price, setPrice] = useState('0')
+  const [price, setPrice] = useState('')
   const [count, setCount] = useState(0)
   const nav = useNavigate()
 
@@ -41,7 +41,7 @@ const FormAddResource = () => {
       setName('')
       setType('')
       setDescription('')
-      setPrice('0')
+      setPrice('')
       setCount(0)
 
       // nav('/resources')
@@ -76,16 +76,17 @@ const FormAddResource = () => {
   }
 
   const handleInputPrice = (value) => {
-    if (value.length === 1 && value === '0') {
-      // Allow single zero
-      setPrice(value)
-    } else if (value.length > 1 && value.startsWith('0')) {
-      // If more than one character and starts with zero, remove leading zero
-      value = value.replace(/^0+/, '') // Remove leading zeros
-      setPrice(value)
-    } else if (!isNaN(value)) {
-      // Allow valid numeric input
-      setPrice(value)
+    // Menghapus karakter yang tidak valid (non-digit dan selain titik desimal)
+    const sanitizedValue = value.replace(/[^0-9.]/g, '')
+
+    // Jika memiliki lebih dari satu titik desimal, cegah input
+    const dotCount = (sanitizedValue.match(/\./g) || []).length
+    if (dotCount > 1) return
+
+    // Membatasi maksimal dua angka setelah titik desimal
+    const decimalMatch = sanitizedValue.match(/^(\d+(\.\d{0,2})?)?$/)
+    if (decimalMatch) {
+      setPrice(sanitizedValue)
     }
   }
 
@@ -94,7 +95,7 @@ const FormAddResource = () => {
       return parseFloat(value).toLocaleString('id-ID', {
         style: 'currency',
         currency: 'IDR',
-        minimumFractionDigits: 0
+        minimumFractionDigits: 2
       })
     } else {
       return ''

@@ -21,7 +21,6 @@ export const AuthProvider = ({ children }) => {
     try {
       return await refreshAccessToken(refreshToken)
     } catch (error) {
-      console.log(error)
       return login(username, password)
     }
   }

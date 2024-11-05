@@ -90,6 +90,10 @@ const FormEditPet = () => {
     }
   }
 
+  const birthdateHandler = (date) => {
+    !isNaN(Date.parse(date)) ? setBirthdate(Date.parse(date)) : setBirthdate('')
+  }
+
   useEffect(() => {
     setDateString(birthdate.toString())
   }, [birthdate])
@@ -159,7 +163,7 @@ const FormEditPet = () => {
                 className="px-2 py-1 border border-gray-500 rounded text-sm  outline-none  focus:ring-0 bg-transparent"
                 name="birthdate"
                 selected={birthdate}
-                onChange={(date) => setBirthdate(Date.parse(date))}
+                onChange={(date) => birthdateHandler(date)}
                 showYearDropdown
                 isClearable
                 maxDate={new Date()}

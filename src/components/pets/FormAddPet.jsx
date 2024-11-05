@@ -55,43 +55,50 @@ const FormAddPet = () => {
 
   async function saveData(e) {
     e.preventDefault()
+
     try {
-      const response = await PetsService.addPet(user.accessToken, {
-        name: name,
-        type: type,
-        race: race,
-        gender: gender,
+      // Prepare pet data
+      const petData = {
+        name,
+        type,
+        race,
+        gender,
         birthdate: dateString
-      })
-      console.log(response.data.message)
-      const petId = response.data.petId
+      }
 
+      // Add pet and get the response
+      const response = await PetsService.addPet(user.accessToken, petData)
+      const { petId } = response.data
+
+      // Add pet-owner association if ownerId is provided
       if (ownerId) {
-        await PetOwnerService.addPetOwner(user.accessToken, {
-          ownerId,
-          petId
-        })
+        await PetOwnerService.addPetOwner(user.accessToken, { ownerId, petId })
       }
 
-      if (response) {
-        setMessageWithDelay(response.message, 5000)
-
-        setErrorMsg('')
-
-        setName('')
-        setType('')
-        setRace('')
-        setGender('')
-        setBirthdate('')
-
-        setOwnerId('')
-        setOwnerName('')
-        setRegCode('')
-      }
+      // Show success message and reset the form
+      setMessageWithDelay(response.message, 5000)
+      resetForm()
     } catch (error) {
-      if (error.statusCode === 401) user.refreshAccessToken()
-      setErrorMsg(`${error}`)
+      // Refresh token if unauthorized
+      if (error.statusCode === 401) {
+        user.refreshAccessToken()
+      }
+
+      // Set appropriate error message
+      setErrorMsg(error.message || 'An error occurred while saving data')
     }
+  }
+
+  // Helper function to reset form fields
+  function resetForm() {
+    setName('')
+    setType('')
+    setRace('')
+    setGender('')
+    setBirthdate('')
+    setOwnerId('')
+    setOwnerName('')
+    setRegCode('')
   }
 
   const renderOwner = () => {
@@ -137,6 +144,10 @@ const FormAddPet = () => {
     }
   }
 
+  const birthdateHandler = (date) => {
+    !isNaN(Date.parse(date)) ? setBirthdate(Date.parse(date)) : setBirthdate('')
+  }
+
   useEffect(() => {
     setDateString(birthdate.toString())
   }, [birthdate])
@@ -151,25 +162,7 @@ const FormAddPet = () => {
           <form name="userForm" autoComplete="off" onSubmit={saveData}>
             <p className="text-center text-md text-red-500">{errorMsg}</p>
             <p className="text-center text-md text-green-500">{msg}</p>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1 mt-4">Owner</label>
-              <input
-                className="p-1 rounded-md block my-1 ring-1 ring-gray-900/10"
-                type="text"
-                placeholder="Cari owner..."
-                value={ownerFilterText}
-                onChange={(e) => setOwnerFilterText(e.target.value)}
-              />
-              <select
-                className="w-1/3 p-1 text-sm block mt-1 border-gray-400 rounded-md border shadow-sm text-black focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                value={ownerName}
-                data-value={regCode}
-                data-id={ownerId}
-                onChange={(e) => OwnHandler(e)}>
-                <option value="">Pilih Owner</option>
-                {renderOwner()}
-              </select>
-            </div>
+
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1 mt-4">Nama</label>
 
@@ -224,7 +217,7 @@ const FormAddPet = () => {
                 className="px-2 py-1 border border-gray-500 rounded text-sm  outline-none  focus:ring-0 bg-transparent"
                 name="birthdate"
                 selected={birthdate}
-                onChange={(date) => setBirthdate(Date.parse(date))}
+                onChange={(date) => birthdateHandler(date)}
                 showYearDropdown
                 isClearable
                 maxDate={new Date()}
@@ -232,6 +225,28 @@ const FormAddPet = () => {
                 yearDropdownItemNumber={70}
                 scrollableYearDropdown
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1 mt-4">
+                Owner (jika ada)
+              </label>
+              <input
+                className="p-1 rounded-md block my-1 ring-1 ring-gray-900/10"
+                type="text"
+                placeholder="Cari owner..."
+                value={ownerFilterText}
+                onChange={(e) => setOwnerFilterText(e.target.value)}
+              />
+              <select
+                className="w-1/3 p-1 text-sm block mt-1 border-gray-400 rounded-md border shadow-sm text-black focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                value={ownerName}
+                data-value={regCode}
+                data-id={ownerId}
+                onChange={(e) => OwnHandler(e)}>
+                <option value="">Pilih Owner</option>
+                {renderOwner()}
+              </select>
             </div>
 
             <div className="flex items-center justify-start mt-4 gap-x-2">

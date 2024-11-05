@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import PetsService from '../../features/PetsService'
 import { useAuth } from '../Authentications/Authentication'
+import DeleteConfirmationModal from '../utils/DeleteConfirmationModal'
 
 const Pets = () => {
   const user = useAuth()
@@ -12,6 +13,9 @@ const Pets = () => {
   // error message
   const [errorMsg, setErrorMsg] = useState('')
   const [msg, setMsg] = useState('')
+
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [selectedPet, setSelectedPet] = useState(null)
 
   // Function to set message and clear after delay
   const setMessageWithDelay = (message, delay) => {
@@ -53,15 +57,6 @@ const Pets = () => {
     setSearchInput(e.target.value)
   }
 
-  const filterData = data.filter((pet) => {
-    return (
-      pet.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-      pet.type.toLowerCase().includes(searchInput.toLowerCase()) ||
-      pet.race.toLowerCase().includes(searchInput.toLowerCase()) ||
-      pet.gender.toLowerCase() === searchInput.toLowerCase()
-    )
-  })
-
   const formatBirthdate = (bod) => {
     const birthdateTimestamp = parseInt(bod)
     const currentDate = new Date()
@@ -100,6 +95,18 @@ const Pets = () => {
     return age
   }
 
+  const filterData = data.filter((pet) => {
+    return (
+      pet.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+      pet.type.toLowerCase().includes(searchInput.toLowerCase()) ||
+      pet.race.toLowerCase().includes(searchInput.toLowerCase()) ||
+      pet.gender.toLowerCase() === searchInput.toLowerCase() ||
+      formatBirthdate(pet.birthdate).toLowerCase().includes(searchInput.toLowerCase()) ||
+      pet.register_code.toLowerCase().includes(searchInput.toLowerCase()) ||
+      pet.owner_name.toLowerCase().includes(searchInput.toLowerCase())
+    )
+  })
+
   const navigateOwnerHandler = (e, ownerId) => {
     e.preventDefault()
     if (ownerId) {
@@ -122,46 +129,54 @@ const Pets = () => {
       )
   }
 
+  const confirmDelete = () => {
+    if (selectedPet) {
+      deletePet(selectedPet.id)
+      setModalOpen(false)
+      setSelectedPet(null)
+    }
+  }
+
   const renderTable = () => {
     return filterData.map((pet, index) => {
       return (
         <tr key={pet.id} className="hover:bg-black hover:text-white">
-          <td className="px-1 py-1 mx-auto border border-gray-500 align-top">
-            <div style={{ textAlign: 'center' }}>{index + 1}</div>
+          <td className="px-1 py-1 my-auto border border-gray-500 align-middle">
+            <p className="text-center">{index + 1}</p>
           </td>
           <td
             onClick={(e) => navigatePetHandler(e, pet.id)}
-            className="px-3 py-1 border border-gray-500 align-top">
-            <p className="text-justify">{pet.name}</p>
+            className="px-3 py-1  border border-gray-500 align-middle">
+            <p className="text-justify my-auto">{pet.name}</p>
           </td>
           <td
             onClick={(e) => navigatePetHandler(e, pet.id)}
-            className="px-2 py-1 border border-gray-500 align-top">
+            className="px-2 py-1 border border-gray-500 align-middle">
             <p className="text-center">{pet.type}</p>
           </td>
           <td
             onClick={(e) => navigatePetHandler(e, pet.id)}
-            className="px-2 py-1 border border-gray-500 align-top">
+            className="px-2 py-1 border border-gray-500 align-middle">
             <p className="text-center">{pet.race}</p>
           </td>
           <td
             onClick={(e) => navigatePetHandler(e, pet.id)}
-            className="px-2 py-1 border border-gray-500 align-top">
+            className="px-2 py-1 border border-gray-500 align-middle">
             <p className="text-center">{pet.gender}</p>
           </td>
           <td
             onClick={(e) => navigatePetHandler(e, pet.id)}
-            className="px-2 py-1 border border-gray-500 align-top">
+            className="px-2 py-1 border border-gray-500 align-middle">
             <p className="text-center">{formatBirthdate(pet.birthdate)}</p>
           </td>
           <td
             onClick={(e) => navigateOwnerHandler(e, pet.owner_id)}
-            className="px-2 py-1 border border-gray-500 align-top cursor-pointer">
+            className="px-2 py-1 border border-gray-500 align-middle cursor-pointer">
             {renderOwner(pet.register_code, pet.owner_name)}
           </td>
 
           <td className="text-sm font-medium text-center border border-gray-500 align-middle">
-            <div className="text-center py-1 flex items-center justify-center sm:flex-row">
+            <div className="text-center py-1 flex items-center justify-evenly">
               <Link to={`/edit-pet?petId=${pet.id}`}>
                 <button
                   title="Edit"
@@ -175,9 +190,10 @@ const Pets = () => {
                 title="Remove"
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Konfirmasi Hapus ${pet.name}`)) deletePet(pet.id)
+                  setSelectedPet(pet)
+                  setModalOpen(true)
                 }}
-                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
+                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md items-center">
                 Delete
               </button>
             </div>
@@ -192,13 +208,13 @@ const Pets = () => {
       <h1 className="sm:text-3xl font-bold decoration-gray-400">Daftar Peliharaan</h1>
       <div className=" mt-5 mb-4">
         <div className="is-justify-content-space-between flex">
-          <Link
-            to={'/add-pet'}
-            className="inline px-6 py-2 w-fit text-sm font-semibold rounded-md shadow-md text-white bg-green-500 hover:bg-green-400 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300">
-            Tambah baru
+          <Link to={'/add-pet'}>
+            <button className="inline px-6 py-2 w-fit text-sm font-semibold rounded-md text-white bg-green-500 hover:bg-green-400">
+              Tambah baru
+            </button>
           </Link>
           <input
-            className="inline px-2 bg-gray-200 border-gray-400 rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="inline px-2 py-2 bg-gray-200 border rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left border-blue-500 ring ring-blue-400 focus:ring-opacity-50 transition duration-300 ease-in-out"
             value={searchInput}
             onChange={searchHandler}
             placeholder="Search"
@@ -242,6 +258,12 @@ const Pets = () => {
               </table>
             </div>
           </div>
+          <DeleteConfirmationModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+            onConfirm={confirmDelete}
+            name={selectedPet ? selectedPet.name : ''}
+          />
         </div>
       </div>
     </div>

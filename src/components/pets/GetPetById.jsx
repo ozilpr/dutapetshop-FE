@@ -118,7 +118,9 @@ const GetPetById = () => {
           <div className="mt-4">
             <label className="text-sm text-gray-700 mb-1">Tanggal Lahir: </label>
             <label className="inline text-sm font-bold text-gray-700 mb-1">
-              {dateString + ' (Umur: ' + formatBirthdate(data.birthdate) + ')'}
+              {data.birthdate
+                ? `${dateString} (Umur: ${formatBirthdate(data.birthdate)})`
+                : 'Belum ada'}
             </label>
           </div>
 

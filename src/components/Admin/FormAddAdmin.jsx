@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import AdminService from '../../features/AdminService'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../Authentications/Authentication'
 
 const FormAddAdmin = () => {
+  const user = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confPassword, setConfPassword] = useState('')
@@ -14,17 +16,17 @@ const FormAddAdmin = () => {
 
   async function saveData(e) {
     e.preventDefault()
-    try {
-      // if (username === '') {
-      //   setMsg('Input nama tidak boleh kosong')
-      //   return false
-      // }
-      // if (password === '' && confPassword === '') {
-      //   setMsg('Input password tidak boleh kosong')
-      //   return false
-      // }
+    if (!username || !fullname || !password || !confPassword) {
+      setMsg('Semua kolom harus diisi.')
+      return
+    }
 
-      await AdminService.addAdmin({
+    if (password !== confPassword) {
+      setMsg('Password dan konfirmasi password tidak cocok.')
+      return
+    }
+    try {
+      await AdminService.addAdmin(user.accessToken, {
         username: username,
         password: password,
         confPassword: confPassword,
@@ -32,6 +34,7 @@ const FormAddAdmin = () => {
       })
       nav('/admin')
     } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
       setMsg(`${error.message}`)
     }
   }
@@ -78,7 +81,7 @@ const FormAddAdmin = () => {
           <h1 className=" text-2xl font-bold decoration-gray-400">Tambah Admin Baru</h1>
         </div>
         <div className="w-full px-6 py-4 bg-white rounded shadow-md ring-1 ring-gray-900/10">
-          <form name="userForm" autoComplete="off" onSubmit={saveData}>
+          <form name="userForm" autoComplete="off">
             <p className="text-center text-md text-red-500">{msg}</p>
             <div className="mt-4">
               <label className="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
@@ -98,6 +101,7 @@ const FormAddAdmin = () => {
               <input
                 className="p-2 block w-full my-1 bg-gray-200 border-gray-400 rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 type="text"
+                pattern="[a-zA-Z0-9]+"
                 name="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -140,7 +144,8 @@ const FormAddAdmin = () => {
             </div>
             <div className="flex items-center justify-start mt-4 gap-x-2">
               <button
-                type="submit"
+                type="button"
+                onClick={(e) => saveData(e)}
                 className="px-6 py-2 mr-1 text-sm font-semibold rounded-md shadow-md text-white bg-green-500 hover:bg-green-700 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300">
                 Simpan
               </button>

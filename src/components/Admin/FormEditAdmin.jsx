@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import AdminService from '../../features/AdminService'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../Authentications/Authentication'
 
 const FormEditAdmin = () => {
+  const user = useAuth()
   const [data, setData] = useState([])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -17,16 +19,16 @@ const FormEditAdmin = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await AdminService.getAdminById(adminId)
+      const response = await AdminService.getAdminById(user.accessToken, adminId)
       setData(response.data.admin)
     }
     fetchData()
-  }, [adminId])
+  }, [user, adminId])
 
   async function saveData(e) {
     e.preventDefault()
     try {
-      await AdminService.updateAdminById(adminId, {
+      await AdminService.updateAdminById(user.accessToken, adminId, {
         username: username,
         password: password,
         confPassword: confPassword,
@@ -34,6 +36,7 @@ const FormEditAdmin = () => {
       })
       nav('/admin')
     } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
       setMsg(`${error.message}`)
     }
   }

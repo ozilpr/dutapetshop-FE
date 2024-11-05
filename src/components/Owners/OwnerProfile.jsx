@@ -3,6 +3,7 @@ import { useAuth } from '../Authentications/Authentication'
 import OwnersService from '../../features/OwnersService'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import PetOwnerService from '../../features/PetOwnerService'
+import DeleteConfirmationModal from '../utils/DeleteConfirmationModal'
 
 const OwnerProfile = () => {
   const user = useAuth()
@@ -15,6 +16,10 @@ const OwnerProfile = () => {
   const [petStatus, setPetStatus] = useState('')
   const [msg, setMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [selectedPetOwner, setSelectedPetOwner] = useState(null)
+  const [selectedOwner, setSelectedOwner] = useState(null)
 
   // Function to set message and clear after delay
   const setMessageWithDelay = (message, delay) => {
@@ -29,7 +34,7 @@ const OwnerProfile = () => {
     try {
       const ownerResponse = await OwnersService.getOwnerById(user.accessToken, ownerId)
       setOwnerData(ownerResponse.data.owner)
-      console.log(ownerId)
+
       const petOwnerResponse = await PetOwnerService.getPetOwnerByOwnerId(user.accessToken, ownerId)
       setPetOwnerData(petOwnerResponse.data.pet)
     } catch (error) {
@@ -65,20 +70,26 @@ const OwnerProfile = () => {
     nav(`/pet?petId=${petId}`)
   }
 
-  const deletePetOwner = useCallback(
-    async (id) => {
-      try {
-        const response = await PetOwnerService.deletePetOwnerById(user.accessToken, id)
-        setMessageWithDelay(response, 3000)
-        setErrorMsg('')
-        fetchData()
-      } catch (error) {
-        if (error.statusCode === 401) user.refreshAccessToken()
-        setErrorMsg(`${error}`)
-      }
-    },
-    [user, fetchData]
-  )
+  const deletePetOwner = async (id) => {
+    try {
+      const response = await PetOwnerService.deletePetOwnerById(user.accessToken, id)
+      setMessageWithDelay(response, 3000)
+      setErrorMsg('')
+      setPetOwnerData([])
+      fetchData()
+    } catch (error) {
+      if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(`${error}`)
+    }
+  }
+
+  const confirmDelete = () => {
+    if (selectedPetOwner && selectedOwner) {
+      deletePetOwner(selectedPetOwner.pet_owner_id)
+      setModalOpen(false)
+      setSelectedOwner(null)
+    }
+  }
 
   return (
     <div className="flex flex-col items-center min-h-screen mt-2 bg-gray-100 ">
@@ -112,22 +123,23 @@ const OwnerProfile = () => {
           <div className="my-2">
             {petOwnerData.length > 0 ? (
               <React.Fragment>
-                {petOwnerData.map((petOwner) => (
+                {petOwnerData.map((petOwner, index) => (
                   <div
-                    key={petOwner.id}
+                    key={index + 1}
                     title="Show pet"
                     className="w-fit inline content-center mr-2 px-2 py-2 bg-white hover:bg-black hover:text-white rounded shadow-md ring-1 ring-gray-200 cursor-pointer">
-                    <p onClick={(e) => navigateHandler(e, petOwner.pet_id)} className="inline">
+                    <p onClick={(e) => navigateHandler(e, petOwner.pet_id)} className="inline px-1">
                       {petOwner.pet_name}
                     </p>
                     <button
                       title="Remove"
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`Konfirmasi Hapus Kepemilikan`))
-                          deletePetOwner(petOwner.id)
+                        setSelectedPetOwner(petOwner)
+                        setSelectedOwner(ownerData)
+                        setModalOpen(true)
                       }}
-                      className="inline content-center mx-1 sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold px-1 rounded-md  items-center">
+                      className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md items-center">
                       ×
                     </button>
                   </div>
@@ -148,15 +160,23 @@ const OwnerProfile = () => {
         </div>
         <div className="w-full px-4 py-4 bg-white rounded shadow-md ring-1 ring-gray-900/10">
           <div>Data Transaksi Owner</div>
-          <Link
-            title="View Owner Transactions"
-            to={`/transaction/detail/owner?ownerId=${ownerData.id}`}>
+          <Link title="View Owner Transactions" to={`/transaction/detail?ownerId=${ownerData.id}`}>
             <div className="w-fit inline-block my-2 px-2 py-1 text-white bg-black hover:bg-gray-700 rounded mb-4">
               <p>Lihat</p>
             </div>
           </Link>
         </div>
       </div>
+      <DeleteConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={confirmDelete}
+        name={
+          selectedPetOwner && selectedOwner
+            ? selectedPetOwner.pet_name + ' sebagai peliharaan ' + selectedOwner.name
+            : ''
+        }
+      />
     </div>
   )
 }
