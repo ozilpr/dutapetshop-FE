@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import TransactionService from '../../features/TransactionsService'
 import { useAuth } from '../Authentications/Authentication'
+import DeleteConfirmationModal from '../utils/DeleteConfirmationModal'
 
 const Trasanctions = () => {
   const user = useAuth()
+  const [searchParams] = useSearchParams()
+  const ownerId = searchParams.get('ownerId')
+
   const [data, setData] = useState([])
 
   const [startDate, setStartDate] = useState('')
@@ -12,6 +16,10 @@ const Trasanctions = () => {
 
   const [msg, setMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [selectedTransaction, setSelectedTransaction] = useState(null)
 
   const [visibleItems, setVisibleItems] = useState(false)
   const [visibleAllItems, setVisibleAllItems] = useState(false)
@@ -31,38 +39,46 @@ const Trasanctions = () => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     timeZoneName: 'short'
   }
 
-  const fetchData = useCallback(async () => {
-    try {
-      const response = await TransactionService.getTransactionDetails(user.accessToken)
-      setData(response.data)
-      setErrorMsg('')
-    } catch (error) {
-      if (error.statusCode === 401) user.refreshAccessToken()
-      setErrorMsg(`${error.message}`)
-    }
-  }, [user])
+  const fetchData = useCallback(
+    async (start = '', end = '') => {
+      if ((start && !end) || (!start && end)) {
+        setErrorMsg('Tanggal mulai dan tanggal akhir harus diisi atau keduanya harus kosong')
+      }
+      try {
+        const url = new URL(window.location)
+
+        if (ownerId && !start && !end) {
+          url.searchParams.set('ownerId', ownerId)
+        } else {
+          url.searchParams.delete('ownerId')
+        }
+
+        window.history.replaceState({}, '', url)
+
+        const dateRange = { startDate: start, endDate: end }
+
+        const response = ownerId
+          ? await TransactionService.getTransactionByOwnerId(user.accessToken, ownerId, dateRange)
+          : await TransactionService.getTransactions(user.accessToken, dateRange)
+
+        setData(response.data)
+        setErrorMsg('')
+      } catch (error) {
+        if (error.statusCode === 401) user.refreshAccessToken()
+        setErrorMsg(`${error.message}`)
+      }
+    },
+    [user, ownerId]
+  )
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
   const deleteTransaction = async (id) => {
-    try {
-      const response = await TransactionService.deleteTransactionDetailById(user.accessToken, id)
-      setMessageWithDelay(response, 3000)
-      setErrorMsg('')
-      fetchData()
-    } catch (error) {
-      if (error.statusCode === 401) user.refreshAccessToken()
-      setErrorMsg(`${error.message}`)
-    }
-  }
-
-  const deleteTransactionItem = async (id) => {
     try {
       const response = await TransactionService.deleteTransactionById(user.accessToken, id)
       setMessageWithDelay(response, 3000)
@@ -72,15 +88,6 @@ const Trasanctions = () => {
       if (error.statusCode === 401) user.refreshAccessToken()
       setErrorMsg(`${error.message}`)
     }
-  }
-
-  const calculateTotalPrice = (transaction) => {
-    let totalPrice = 0
-    transaction.transactions.forEach((item) => {
-      const totalItem = item.price * item.quantity
-      totalPrice += totalItem
-    })
-    return totalPrice
   }
 
   const toggleShowItems = (e, transactionId) => {
@@ -100,7 +107,7 @@ const Trasanctions = () => {
 
   const formatDate = (date) => {
     const newDate = new Date(date)
-    const formattedDate = newDate.toLocaleDateString('id-ID', dateOptions)
+    const formattedDate = newDate.toLocaleDateString('id-ID', dateOptions).replace(/\./g, ':')
     return formattedDate
   }
 
@@ -111,10 +118,26 @@ const Trasanctions = () => {
       const startDateObj = new Date(startDate)
       const endDateObj = new Date(endDate)
 
-      // Check if end date is earlier than start date
-      if (endDateObj < startDateObj) {
-        // If so, set end date to start date
-        setEndDate(startDate)
+      startDateObj.setHours(0, 0, 0, 0)
+      endDateObj.setHours(0, 0, 0, 0)
+
+      if (startDateObj.getTime() === endDateObj.getTime()) {
+        const newEndDateObj = new Date(endDateObj)
+        newEndDateObj.setDate(endDateObj.getDate())
+        newEndDateObj.setHours(23, 59, 59, 999)
+
+        setStartDate(startDateObj.toISOString().split('T')[0])
+        setEndDate(newEndDateObj.toISOString().split('T')[0])
+      }
+
+      if (endDateObj.getTime() < startDateObj.getTime()) {
+        const newStartDateObj = new Date(startDateObj)
+        newStartDateObj.setDate(startDateObj.getDate() + 1)
+        endDateObj.setDate(startDateObj.getDate() + 1)
+
+        endDateObj.setHours(23, 59, 59, 999)
+        setEndDate(endDateObj.toISOString().split('T')[0])
+        setStartDate(newStartDateObj.toISOString().split('T')[0])
       }
     }
   }, [startDate, endDate])
@@ -127,23 +150,75 @@ const Trasanctions = () => {
     setEndDate(event.target.value)
   }
 
+  const handleDownload = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const response = ownerId
+        ? await TransactionService.generateTransactionsPdf(
+            user.accessToken,
+            startDate,
+            endDate,
+            ownerId
+          )
+        : await TransactionService.generateTransactionsPdf(user.accessToken, startDate, endDate)
+
+      const pdfBlob = new Blob([response], { type: 'application/pdf' })
+
+      const url = URL.createObjectURL(pdfBlob)
+
+      const newWindow = window.open(url)
+
+      if (newWindow) {
+        newWindow.addEventListener('unload', () => {
+          URL.revokeObjectURL(url)
+          console.info('url revoked')
+        })
+      }
+    } catch (error) {
+      if (error.statusCode === 401) {
+        setErrorMsg(error.message)
+        user.refreshAccessToken()
+      } else {
+        setErrorMsg(error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const confirmDelete = () => {
+    if (selectedTransaction) {
+      deleteTransaction(selectedTransaction.id)
+      setModalOpen(false)
+      setSelectedTransaction(null)
+    }
+  }
+
   const listTransaction = () => {
     const filteredData = data.filter((transaction) => {
       const transactionDate = new Date(transaction.transaction_date)
+
+      // Set the comparison dates
+      const startDateObj = startDate ? new Date(new Date(startDate).setHours(0, 0, 0, 0)) : null
+      const endDateObj = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : null
+
       return (
-        (!startDate || transactionDate >= new Date(startDate)) &&
-        (!endDate || transactionDate <= new Date(endDate))
+        (!startDateObj || transactionDate >= startDateObj) &&
+        (!endDateObj || transactionDate <= endDateObj)
       )
     })
 
     return filteredData.map((transaction, index) => {
-      // Render transaction components here
-
       return (
-        <React.Fragment key={transaction.transaction_id}>
+        <React.Fragment key={index + 1}>
           <tr className="hover:bg-black hover:text-white cursor-pointer">
             <td className="p-1 text-sm font-medium text-center border-y-2 border-gray-500 align-middle">
               <p className="text-center">{index + 1 + '.'}</p>
+            </td>
+            <td className="p-1 text-sm font-medium text-center border-y-2 border-gray-500 align-middle">
+              <p className="text-center">{transaction.register_code}</p>
             </td>
             <td className="p-1 text-sm font-medium text-center text-white border-y-2 border-gray-500 align-middle">
               <Link to={`/owner-profile?ownerId=${transaction.owner_id}`} title="See owner info">
@@ -153,17 +228,14 @@ const Trasanctions = () => {
               </Link>
             </td>
             <td className="p-1 text-sm font-medium text-center border-y-2 border-gray-500 align-middle">
-              <p className="text-center">{transaction.register_code}</p>
-            </td>
-            <td className="p-1 text-sm font-medium text-center border-y-2 border-gray-500 align-middle">
               <p className="text-center">{formatDate(transaction.transaction_date)}</p>
             </td>
             <td className="py-1 px-3 text-sm font-medium text-center border-y-2 border-gray-500 align-middle">
               <p className="text-right">
-                {calculateTotalPrice(transaction).toLocaleString('id-ID', {
+                {parseFloat(transaction.total_price).toLocaleString('id-ID', {
                   style: 'currency',
                   currency: 'IDR',
-                  minimumFractionDigits: 0
+                  minimumFractionDigits: 2
                 })}
               </p>
             </td>
@@ -171,33 +243,25 @@ const Trasanctions = () => {
               <div className="text-center flex items-center justify-center sm:flex-row">
                 <button
                   title="Show detail"
-                  onClick={(e) => toggleShowItems(e, transaction.transaction_id)}
+                  onClick={(e) => toggleShowItems(e, transaction.id)}
                   className="inline px-2 py-1 mx-2 bold border rounded-md text-white bg-black hover:bg-gray-700">
-                  {visibleItems[transaction.transaction_id] || visibleAllItems ? '-' : '+'}
+                  {visibleItems[transaction.id] || visibleAllItems ? '-' : '+'}
                 </button>
-                {/* <Link
-                  to={`/edit-transaction/detail?transactionId=${transaction.transaction_id}`}
-                  className="mx-1">
-                  <button
-                    title="Edit"
-                    className="sm:text-sm bg-sky-500 hover:bg-sky-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
-                    <p className="rotate-45">✏</p>
-                  </button>
-                </Link> */}
 
                 <button
                   title="Remove"
+                  type="button"
                   onClick={() => {
-                    if (window.confirm(`Konfirmasi Hapus Transaksi`))
-                      deleteTransaction(transaction.transaction_id)
+                    setSelectedTransaction(transaction)
+                    setModalOpen(true)
                   }}
-                  className="mx-1 sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
-                  ×
+                  className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md items-center">
+                  Delete
                 </button>
               </div>
             </td>
           </tr>
-          {(visibleItems[transaction.transaction_id] || visibleAllItems) && (
+          {(visibleItems[transaction.id] || visibleAllItems) && (
             <tr>
               <td colSpan="6">
                 <div className="float-right">
@@ -205,38 +269,35 @@ const Trasanctions = () => {
                   <table className="w-full mx-auto mb-4">
                     <thead className="border">
                       <tr className="">
-                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border-y border-gray-200 bg-gray-50">
+                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border border-gray-200 bg-gray-50">
                           <p className="text-center">Nama Item</p>
                         </th>
-                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border-y border-gray-200 bg-gray-50">
+                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border border-gray-200 bg-gray-50">
                           <p className="text-center">Qty.</p>
                         </th>
-                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border-y border-gray-200 bg-gray-50">
+                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border border-gray-200 bg-gray-50">
                           <p className="text-center">Harga</p>
                         </th>
                         <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border border-gray-200 bg-gray-50">
                           <p className="text-center">Sub Total</p>
                         </th>
-                        <th className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-white border border-gray-200 bg-black">
-                          <p className="text-center">Action</p>
-                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {transaction.transactions.map((item) => (
-                        <tr key={item.id}>
-                          <td className="px-3 align-middle border-y bold text-gray-600">
+                      {transaction.transaction_items.map((item, index) => (
+                        <tr key={index + 1}>
+                          <td className="px-3 align-middle border bold text-gray-600">
                             <p className="text-left">{item.resource_name}</p>
                           </td>
-                          <td className="px-3 align-middle border-y bold text-gray-600">
+                          <td className="px-3 align-middle border bold text-gray-600">
                             <p className="text-center">{item.quantity}</p>
                           </td>
-                          <td className="px-3 align-middle border-y bold text-gray-600">
+                          <td className="px-3 align-middle border bold text-gray-600">
                             <p className="text-right">
                               {parseFloat(item.price).toLocaleString('id-ID', {
                                 style: 'currency',
                                 currency: 'IDR',
-                                minimumFractionDigits: 0
+                                minimumFractionDigits: 2
                               })}
                             </p>
                           </td>
@@ -245,37 +306,47 @@ const Trasanctions = () => {
                               {parseFloat(item.price * item.quantity).toLocaleString('id-ID', {
                                 style: 'currency',
                                 currency: 'IDR',
-                                minimumFractionDigits: 0
+                                minimumFractionDigits: 2
                               })}
                             </p>
                           </td>
-                          <td className="align-middle text-sm font-medium text-center border text-black">
-                            <div className="text-center flex items-center justify-center sm:flex-row">
-                              {/* <Link to={`/edit-transaction?transactionId=${item.id}`}>
-                                <button
-                                  title="Edit"
-                                  className="sm:text-sm bg-sky-500 hover:bg-sky-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
-                                  <p className="rotate-45">✏</p>
-                                </button>
-                              </Link> */}
-
-                              <button
-                                title="Remove"
-                                onClick={() => {
-                                  if (
-                                    window.confirm(
-                                      `Konfirmasi Hapus ${item.resource_name} pada Transaksi`
-                                    )
-                                  )
-                                    deleteTransactionItem(item.id)
-                                }}
-                                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
-                                ×
-                              </button>
-                            </div>
-                          </td>
                         </tr>
                       ))}
+                      {transaction.discount !== 0 && (
+                        <tr>
+                          <td
+                            colSpan={3}
+                            className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border border-gray-200 bg-gray-50">
+                            <p className="text-right">Diskon</p>
+                          </td>
+                          <td className="px-3 align-middle border bold text-gray-600">
+                            <p className="text-right text-red-600">
+                              -
+                              {parseFloat(transaction.discount).toLocaleString('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                                minimumFractionDigits: 2
+                              })}
+                            </p>
+                          </td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="px-2 py-1 text-xs font-medium leading-4 md:w-auto text-black border border-gray-200 bg-gray-50">
+                          <p className="text-right">Total</p>
+                        </td>
+                        <td className="px-3 align-middle border bold text-gray-600">
+                          <p className="text-right">
+                            {parseFloat(transaction.total_price).toLocaleString('id-ID', {
+                              style: 'currency',
+                              currency: 'IDR',
+                              minimumFractionDigits: 2
+                            })}
+                          </p>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -293,16 +364,6 @@ const Trasanctions = () => {
         <div className="flex is-justify-content-space-between">
           <div>
             <h2 className="inline text-2xl font-bold decoration-gray-400">List Transaksi</h2>
-            <Link to={`/add-transaction`} title="Add Transaction">
-              <button className="mx-3 text-white border bg-green-500 hover:bg-green-400 font-semibold px-2 rounded-md  items-center">
-                Buat Transaksi Baru
-              </button>
-            </Link>
-            <button
-              onClick={(e) => toggleShowAllItems(e)}
-              className="inline mx-3 text-white border bg-black hover:bg-gray-700 font-semibold px-2 rounded-md  items-center">
-              {!visibleAllItems ? 'Show all' : 'Hide all'}
-            </button>
           </div>
           <div>
             <p className="inline mx-1">Start Date:</p>
@@ -321,7 +382,32 @@ const Trasanctions = () => {
               onChange={handleEndDateChange}
               placeholder="End Date"
             />
+            <button
+              onClick={() => fetchData(startDate, endDate)}
+              className="inline mx-3 text-white border bg-sky-400 hover:bg-sky-700 font-semibold px-2 rounded-md  items-center">
+              Search
+            </button>
           </div>
+        </div>
+        <div className="flex justify-start">
+          <Link to={`/add-transaction`} title="Add Transaction">
+            <button className="mr-3 text-white border bg-green-500 hover:bg-green-400 font-semibold px-2 rounded-md items-center">
+              Buat Transaksi Baru
+            </button>
+          </Link>
+          <button
+            onClick={(e) => toggleShowAllItems(e)}
+            className="inline mx-3 text-white border bg-black hover:bg-gray-700 font-semibold px-2 rounded-md items-center">
+            {!visibleAllItems ? 'Show all' : 'Hide all'}
+          </button>
+          <button
+            disabled={loading}
+            onClick={(e) => handleDownload(e)}
+            className={`inline mx-3 text-white font-semibold px-2 rounded-md items-center ${
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-400'
+            }`}>
+            {loading ? 'Loading...' : 'Export'}
+          </button>
         </div>
         <div className="my-2">
           <p className="text-center text-md text-red-500">{errorMsg}</p>
@@ -335,16 +421,16 @@ const Trasanctions = () => {
                   No.
                 </th>
                 <th className="px-2 py-3 text-xs font-medium leading-4 md:w-auto text-gray-600 uppercase border-b border-gray-200 bg-gray-50">
-                  Nama Owner
+                  Kode Registrasi
                 </th>
                 <th className="px-2 py-3 text-xs font-medium leading-4 md:w-auto text-gray-600 uppercase border-b border-gray-200 bg-gray-50">
-                  Kode Registrasi
+                  Nama Owner
                 </th>
                 <th className="px-2 py-3 text-xs font-medium leading-4 md:w-auto text-gray-600 uppercase border-b border-gray-200 bg-gray-50">
                   Tanggal Transaksi
                 </th>
                 <th className="px-2 py-3 text-xs font-medium leading-4 md:w-auto text-gray-600 uppercase border-b border-gray-200 bg-gray-50">
-                  Total
+                  Nilai Transaksi
                 </th>
                 <th className="px-2 py-3 text-xs font-medium leading-4 md:w-auto text-white uppercase border-b border-gray-200 bg-black">
                   Action
@@ -355,6 +441,16 @@ const Trasanctions = () => {
           </table>
         </div>
       </div>
+      <DeleteConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={confirmDelete}
+        name={
+          selectedTransaction
+            ? 'Transaksi pada ' + formatDate(selectedTransaction.transaction_date)
+            : ''
+        }
+      />
     </div>
   )
 }

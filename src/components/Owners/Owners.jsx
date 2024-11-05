@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import OwnersService from '../../features/OwnersService'
 import { useAuth } from '../Authentications/Authentication'
+import DeleteConfirmationModal from '../utils/DeleteConfirmationModal'
 
 const Owners = () => {
   const user = useAuth()
@@ -12,6 +13,9 @@ const Owners = () => {
   // error message
   const [msg, setMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [selectedOwner, setSelectedOwner] = useState(null)
 
   // Function to set message and clear after delay
   const setMessageWithDelay = (message, delay) => {
@@ -76,10 +80,19 @@ const Owners = () => {
       return phoneNumber.slice(0, 4) + '-' + phoneNumber.slice(4, 8) + '-' + phoneNumber.slice(8)
     }
   }
+
   const ownerClickHandler = (e, ownerId) => {
     e.preventDefault()
 
     nav(`/owner-profile?ownerId=${ownerId}`)
+  }
+
+  const confirmDelete = () => {
+    if (selectedOwner) {
+      deleteOwner(selectedOwner.id)
+      setModalOpen(false)
+      setSelectedOwner(null)
+    }
   }
 
   const renderTable = () => {
@@ -106,7 +119,7 @@ const Owners = () => {
           </td>
 
           <td className="text-sm font-medium text-center border border-gray-500 align-middle">
-            <div className="text-center py-1 flex items-center justify-center sm:flex-row">
+            <div className="text-center py-1 flex items-center justify-evenly sm:flex-row">
               <Link to={`/edit-owner?ownerId=${owner.id}`}>
                 <button
                   title="Edit"
@@ -120,9 +133,10 @@ const Owners = () => {
                 title="Remove"
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Konfirmasi Hapus ${owner.name}`)) deleteOwner(owner.id)
+                  setSelectedOwner(owner)
+                  setModalOpen(true)
                 }}
-                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
+                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md items-center">
                 Delete
               </button>
             </div>
@@ -137,13 +151,13 @@ const Owners = () => {
       <h1 className="sm:text-3xl font-bold decoration-gray-400">Daftar Owner</h1>
       <div className=" mt-5 mb-4">
         <div className="is-justify-content-space-between flex">
-          <Link
-            to={'/add-owner'}
-            className="inline px-6 py-2 w-fit text-sm font-semibold rounded-md shadow-md text-white bg-green-500 hover:bg-green-400 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300">
-            Tambah baru
+          <Link to={'/add-owner'}>
+            <button className="inline px-6 py-2 w-fit text-sm font-semibold rounded-md text-white bg-green-500 hover:bg-green-400">
+              Tambah baru
+            </button>
           </Link>
           <input
-            className="inline px-2 bg-gray-200 border-gray-400 rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="inline px-2 py-2 bg-gray-200 border rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left border-blue-500 ring ring-blue-400 focus:ring-opacity-50 transition duration-300 ease-in-out"
             value={searchInput}
             onChange={searchHandler}
             placeholder="Search"
@@ -178,6 +192,12 @@ const Owners = () => {
               </table>
             </div>
           </div>
+          <DeleteConfirmationModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+            onConfirm={confirmDelete}
+            name={selectedOwner ? selectedOwner.name : ''}
+          />
         </div>
       </div>
     </div>

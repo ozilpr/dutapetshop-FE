@@ -78,10 +78,6 @@ const FormAddPetOwner = () => {
 
           setPetName('')
           setPetId('')
-
-          setOwnerId('')
-          setOwnerName('')
-          setRegCode('')
         }
       }
     } catch (error) {

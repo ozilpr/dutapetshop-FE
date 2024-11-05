@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminService from '../../features/AdminService'
 import { useAuth } from '../Authentications/Authentication'
+import DeleteConfirmationModal from '../utils/DeleteConfirmationModal'
 
 const Admin = () => {
   const user = useAuth()
@@ -10,6 +11,9 @@ const Admin = () => {
 
   // error message
   const [msg, setMsg] = useState('')
+
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [selectedAdmin, setSelectedAdmin] = useState(null)
 
   const fetchData = useCallback(async () => {
     try {
@@ -27,11 +31,20 @@ const Admin = () => {
 
   const deleteAdmin = async (id) => {
     try {
-      await AdminService.deleteAdminById(user.accessToken, id)
+      const response = await AdminService.deleteAdminById(user.accessToken, id)
+      setMsg(response)
       fetchData()
     } catch (error) {
       if (error.statusCode === 401) user.refreshAccessToken()
       setMsg(`${error.message}`)
+    }
+  }
+
+  const confirmDelete = () => {
+    if (selectedAdmin) {
+      deleteAdmin(selectedAdmin.id)
+      setModalOpen(false)
+      setSelectedAdmin(null)
     }
   }
 
@@ -44,23 +57,25 @@ const Admin = () => {
           </td>
           <td className="px-2 py-1 border border-gray-500 align-middle">{admin.fullname}</td>
           <td className="text-sm font-medium text-center border-b border-gray-500 nowrap whitespace-nowrap">
-            <div className="text-center px-2 py-1">
+            <div className="text-center px-2 py-1 justify-evenly flex">
               <Link to={`/edit-admin?adminId=${admin.id}`}>
                 <button
                   title="Edit"
                   type="button"
-                  className="sm:text-sm w-full bg-sky-500 hover:bg-sky-400 text-white font-semibold py-1  mb-1 rounded-md  items-center">
+                  className="sm:text-sm bg-sky-500 hover:bg-sky-400 text-white font-semibold py-1 px-2 rounded-md items-center">
                   Edit
                 </button>
               </Link>
-              <div
+              <button
                 title="Remove"
-                className="sm:text-sm w-full bg-red-500 hover:bg-red-400 text-white font-semibold py-1 mt-1 rounded-md  items-center"
+                type="button"
                 onClick={() => {
-                  if (window.confirm(`Konfirmasi Hapus ${admin.fullname} sebagai admin`))
-                    deleteAdmin(admin.id)
+                  setSelectedAdmin(admin)
+                  setModalOpen(true)
                 }}
-              />
+                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md items-center">
+                Delete
+              </button>
             </div>
           </td>
         </tr>
@@ -101,6 +116,12 @@ const Admin = () => {
               </table>
             </div>
           </div>
+          <DeleteConfirmationModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+            onConfirm={confirmDelete}
+            name={selectedAdmin ? selectedAdmin.fullname : ''}
+          />
         </div>
       </div>
     </div>

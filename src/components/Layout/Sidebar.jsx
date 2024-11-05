@@ -21,7 +21,7 @@ const Sidebar = () => {
             </li>
             <li className="px-1 m-3 border-orange-400 hover:border-gray-300 border-l-4 w-auto">
               <NavLink to={'/owners'}>
-                <p className="text-black">Pemilik Hewan</p>
+                <p className="text-black">Owner</p>
               </NavLink>
             </li>
             <li className="px-1 m-3 border-orange-400 hover:border-gray-300 border-l-4 w-auto">
@@ -32,6 +32,11 @@ const Sidebar = () => {
             <li className="px-1 m-3 border-orange-400 hover:border-gray-300 border-l-4 w-auto">
               <NavLink to={'/transaction/detail'}>
                 <p className="text-black">Transaksi</p>
+              </NavLink>
+            </li>
+            <li className="px-1 m-3 border-orange-400 hover:border-gray-300 border-l-4 w-auto">
+              <NavLink to={'/admin'}>
+                <p className="text-black">Admin</p>
               </NavLink>
             </li>
           </ul>

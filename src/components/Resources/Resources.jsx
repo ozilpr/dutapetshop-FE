@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ResourcesService from '../../features/ResourcesService'
 import { useAuth } from '../Authentications/Authentication'
+import DeleteConfirmationModal from '../utils/DeleteConfirmationModal'
 
 const Resources = () => {
   const user = useAuth()
@@ -11,6 +12,9 @@ const Resources = () => {
   // message
   const [errorMsg, setErrorMsg] = useState('')
   const [msg, setMsg] = useState('')
+
+  const [isModalOpen, setModalOpen] = useState(false)
+  const [selectedResource, setSelectedResource] = useState(null)
 
   // Function to set message and clear after delay
   const setMessageWithDelay = (message, delay) => {
@@ -61,6 +65,14 @@ const Resources = () => {
     )
   })
 
+  const confirmDelete = () => {
+    if (selectedResource) {
+      deleteResource(selectedResource.id)
+      setModalOpen(false)
+      setSelectedResource(null)
+    }
+  }
+
   const renderTable = () => {
     return filterData.map((rsc, index) => {
       return (
@@ -78,17 +90,17 @@ const Resources = () => {
             <p className="text-center">{rsc.type}</p>
           </td>
           <td className="px-2 py-1 border border-gray-500 align-top">
-            <p className="text-justify">
+            <p className="text-right">
               {parseFloat(rsc.price).toLocaleString('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
-                minimumFractionDigits: 0
+                minimumFractionDigits: 2
               })}
             </p>
           </td>
 
           <td className="text-sm font-medium text-center border border-gray-500 align-middle">
-            <div className="text-center py-1 flex items-center justify-center sm:flex-row">
+            <div className="text-center py-1 flex items-center justify-evenly">
               <Link to={`/edit-resource?resourceId=${rsc.id}`}>
                 <button
                   title="Edit"
@@ -99,10 +111,12 @@ const Resources = () => {
 
               <button
                 title="Remove"
+                type="button"
                 onClick={() => {
-                  if (window.confirm(`Konfirmasi Hapus ${rsc.name}`)) deleteResource(rsc.id)
+                  setSelectedResource(rsc)
+                  setModalOpen(true)
                 }}
-                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md  items-center">
+                className="sm:text-sm bg-red-500 hover:bg-red-400 text-white font-semibold py-1 px-2 rounded-md items-center">
                 Delete
               </button>
             </div>
@@ -117,13 +131,13 @@ const Resources = () => {
       <h1 className="sm:text-3xl font-bold decoration-gray-400">Produk Kesehatan</h1>
       <div className=" mt-5 mb-4">
         <div className="is-justify-content-space-between flex">
-          <Link
-            to={'/add-resource'}
-            className="inline px-6 py-2 w-fit text-sm font-semibold rounded-md shadow-md text-white bg-green-500 hover:bg-green-400 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300">
-            Tambah baru
+          <Link to={'/add-resource'}>
+            <button className="inline px-6 py-2 w-fit text-sm font-semibold rounded-md text-white bg-green-500 hover:bg-green-400">
+              Tambah baru
+            </button>
           </Link>
           <input
-            className="inline px-2 bg-gray-200 border-gray-400 rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            className="inline px-2 py-2 bg-gray-200 border rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left border-blue-500 ring ring-blue-400 focus:ring-opacity-50 transition duration-300 ease-in-out"
             value={searchInput}
             onChange={searchHandler}
             placeholder="Search"
@@ -162,6 +176,12 @@ const Resources = () => {
               </table>
             </div>
           </div>
+          <DeleteConfirmationModal
+            isOpen={isModalOpen}
+            onClose={() => setModalOpen(false)}
+            onConfirm={confirmDelete}
+            name={selectedResource ? selectedResource.name : ''}
+          />
         </div>
       </div>
     </div>
