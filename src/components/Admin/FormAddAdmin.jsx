@@ -11,8 +11,16 @@ const FormAddAdmin = () => {
   const [fullname, setFullname] = useState('')
   const nav = useNavigate()
 
-  // error message
   const [msg, setMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const setMessageWithDelay = (message, delay) => {
+    setMsg(message)
+
+    setTimeout(() => {
+      setMsg('')
+    }, delay)
+  }
 
   async function saveData(e) {
     e.preventDefault()
@@ -26,16 +34,17 @@ const FormAddAdmin = () => {
       return
     }
     try {
-      await AdminService.addAdmin(user.accessToken, {
+      const response = await AdminService.addAdmin(user.accessToken, {
         username: username,
         password: password,
         confPassword: confPassword,
         fullname: fullname
       })
-      nav('/admin')
+
+      setMessageWithDelay(response.message, 5000)
     } catch (error) {
+      if (error.response) setErrorMsg(error.message)
       if (error.statusCode === 401) user.refreshAccessToken()
-      setMsg(`${error.message}`)
     }
   }
 
@@ -82,7 +91,8 @@ const FormAddAdmin = () => {
         </div>
         <div className="w-full px-6 py-4 bg-white rounded shadow-md ring-1 ring-gray-900/10">
           <form name="userForm" autoComplete="off">
-            <p className="text-center text-md text-red-500">{msg}</p>
+            <p className="text-center text-md text-red-500">{errorMsg}</p>
+            <p className="text-center text-md text-green-500">{msg}</p>
             <div className="mt-4">
               <label className="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
 

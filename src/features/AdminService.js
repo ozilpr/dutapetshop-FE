@@ -22,7 +22,7 @@ const AdminService = {
         }
       )
 
-      if (response.status === 201) return response.data.message
+      if (response.status === 201) return response.data
     } catch (error) {
       if (error.response) throw new Error(error.response.data.message)
     }
@@ -76,7 +76,7 @@ const AdminService = {
         }
       )
 
-      if (response.status === 200) console.log(response.data.message)
+      if (response.status === 200) return response.data
       return response.data
     } catch (error) {
       if (error.response) throw new Error(error.response.data.message)

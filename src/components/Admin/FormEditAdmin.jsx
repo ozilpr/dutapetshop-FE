@@ -14,8 +14,16 @@ const FormEditAdmin = () => {
   const adminId = searchParams.get('adminId')
   const nav = useNavigate()
 
-  // error message
   const [msg, setMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const setMessageWithDelay = (message, delay) => {
+    setMsg(message)
+
+    setTimeout(() => {
+      setMsg('')
+    }, delay)
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,16 +36,16 @@ const FormEditAdmin = () => {
   async function saveData(e) {
     e.preventDefault()
     try {
-      await AdminService.updateAdminById(user.accessToken, adminId, {
+      const response = await AdminService.updateAdminById(user.accessToken, adminId, {
         username: username,
         password: password,
         confPassword: confPassword,
         fullname: fullname
       })
-      nav('/admin')
+      setMessageWithDelay(response.message, 5000)
     } catch (error) {
+      if (error.response) setErrorMsg(error.message)
       if (error.statusCode === 401) user.refreshAccessToken()
-      setMsg(`${error.message}`)
     }
   }
 
@@ -83,8 +91,9 @@ const FormEditAdmin = () => {
           <h1 className=" text-2xl font-bold decoration-gray-400">Update Admin</h1>
         </div>
         <div className="w-full px-6 py-4 bg-white rounded shadow-md ring-1 ring-gray-900/10">
-          <form name="userForm" autoComplete="off" onSubmit={saveData}>
-            <p className="text-center text-md text-red-500">{msg}</p>
+          <form name="userForm" autoComplete="off">
+            <p className="text-center text-md text-green-500">{msg}</p>
+            <p className="text-center text-md text-red-500">{errorMsg}</p>
             <div className="mt-4">
               <label className="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
 
@@ -147,7 +156,8 @@ const FormEditAdmin = () => {
 
             <div className="flex items-center justify-start mt-4 gap-x-2">
               <button
-                type="submit"
+                type="button"
+                onClick={(e) => saveData(e)}
                 className="px-6 py-2 mr-1 text-sm font-semibold rounded-md shadow-md text-white bg-green-500 hover:bg-green-700 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300">
                 Ubah
               </button>
