@@ -102,8 +102,9 @@ const Pets = () => {
       pet.race.toLowerCase().includes(searchInput.toLowerCase()) ||
       pet.gender.toLowerCase() === searchInput.toLowerCase() ||
       formatBirthdate(pet.birthdate).toLowerCase().includes(searchInput.toLowerCase()) ||
-      pet.register_code.toLowerCase().includes(searchInput.toLowerCase()) ||
-      pet.owner_name.toLowerCase().includes(searchInput.toLowerCase())
+      (pet.register_code && pet.register_code.toLowerCase().includes(searchInput.toLowerCase())) ||
+      (pet.owner_name && pet.owner_name.toLowerCase().includes(searchInput.toLowerCase())) ||
+      false
     )
   })
 

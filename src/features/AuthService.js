@@ -21,7 +21,7 @@ const AuthService = {
 
       if (response.status === 201) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   },
   refreshToken: async (refreshToken) => {
@@ -41,7 +41,7 @@ const AuthService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   },
   logout: async (refreshToken) => {
@@ -58,7 +58,7 @@ const AuthService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   }
 }

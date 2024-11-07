@@ -42,10 +42,12 @@ const FormEditAdmin = () => {
         confPassword: confPassword,
         fullname: fullname
       })
+
       setMessageWithDelay(response.message, 5000)
+      setErrorMsg('')
     } catch (error) {
-      if (error.response) setErrorMsg(error.message)
       if (error.statusCode === 401) user.refreshAccessToken()
+      setErrorMsg(error.message)
     }
   }
 

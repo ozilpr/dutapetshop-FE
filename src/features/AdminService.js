@@ -24,7 +24,7 @@ const AdminService = {
 
       if (response.status === 201) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   },
   getAdminById: async (accessToken, id) => {
@@ -38,7 +38,7 @@ const AdminService = {
 
       if (response.status === 200) return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   },
   getAdminByName: async (accessToken, name) => {
@@ -53,7 +53,7 @@ const AdminService = {
       if (response.status === 200) return response.data
     } catch (error) {
       if (error.response) {
-        throw new Error(error.response.data.message)
+        throw new Error(error.response.data.message, error.response.status)
       }
     }
   },
@@ -77,9 +77,8 @@ const AdminService = {
       )
 
       if (response.status === 200) return response.data
-      return response.data
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   },
   deleteAdminById: async (accessToken, id) => {
@@ -93,7 +92,7 @@ const AdminService = {
 
       if (response.status === 200) return response.data.message
     } catch (error) {
-      if (error.response) throw new Error(error.response.data.message)
+      if (error.response) throw new Error(error.response.data.message, error.response.status)
     }
   }
 }

@@ -54,7 +54,7 @@ const FormEditOwner = () => {
       setMessageWithDelay(response, 3000)
       setErrorMsg('')
     } catch (error) {
-      setErrorMsg(`Owner ${error}`)
+      setErrorMsg(error.message)
     }
   }
 
