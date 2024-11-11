@@ -69,10 +69,11 @@ const FormAddResource = () => {
     // }
   }
 
-  const setDescriptionHandler = (value) => {
-    const { length } = value
+  const setDescriptionHandler = (e) => {
+    e.preventDefault()
+    const { length } = e.target.value
     setCount(length)
-    setDescription(value)
+    setDescription(e.target.value)
   }
 
   const handleInputPrice = (value) => {
@@ -129,11 +130,12 @@ const FormAddResource = () => {
               <textarea
                 name="description"
                 className="p-2 block w-full mt-1 bg-gray-200 border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                rows="4"
+                rows="2"
                 placeholder="Deskripsi..."
                 value={description}
-                onChange={(e) => setDescriptionHandler(e.target.value)}></textarea>
-              <p>{count + '/400'}</p>
+                maxLength={200}
+                onChange={(e) => setDescriptionHandler(e)}></textarea>
+              <p>{count + '/200'}</p>
             </div>
             <div className="mt-4">
               <label className="block text-sm font-bold text-gray-700 mb-1">Tipe</label>

@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     try {
       return await refreshAccessToken(refreshToken)
     } catch (error) {
-      return login(username, password)
+      return await login(username, password)
     }
   }
 
@@ -47,8 +47,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('refreshToken')
       navigate('/')
     } catch (error) {
-      console.error('Logout failed:', error.message)
-      throw new Error(error.message)
+      console.error(error.message)
+      navigate('/')
     }
   }
 
@@ -63,8 +63,12 @@ export const AuthProvider = ({ children }) => {
         logout()
       }
     } catch (error) {
-      console.error('Token refresh failed:', error.message)
-      throw new Error(error.message)
+      console.error(error.message)
+      setAccessToken(null)
+      setRefreshToken(null)
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+      navigate('/')
     }
   }
 

@@ -68,7 +68,8 @@ const FormEditResource = () => {
       setErrorMsg('')
     } catch (error) {
       if (error.statusCode === 401) user.refreshAccessToken()
-      setErrorMsg(`${error.message}`)
+      if (error.statusCode === 500) user.logout()
+      setErrorMsg(error.message)
     }
   }
 
@@ -158,12 +159,12 @@ const FormEditResource = () => {
               <textarea
                 name="description"
                 className="p-2 block w-full my-1 bg-gray-200 border-gray-300 rounded-md shadow-sm placeholder:text-gray-400 placeholder:text-left focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                rows="4"
-                maxLength={400}
+                rows="2"
+                maxLength={200}
                 placeholder={data.description}
                 value={description}
                 onChange={(e) => setDescriptionHandler(e)}></textarea>
-              <p>{count + '/400'}</p>
+              <p>{count + '/200'}</p>
             </div>
             <div className="mt-4">
               <label className="block text-sm font-bold text-gray-700 mb-1">Tipe</label>
